@@ -7,16 +7,30 @@
 		"build": "vite build",
 		"preview": "vite preview",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
-		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch"
+		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+		"ingest": "tsx -r dotenv/config scripts/ingest-data.ts"
 	},
 	"devDependencies": {
-		"@sveltejs/adapter-auto": "^2.0.0",
-		"@sveltejs/kit": "^1.27.4",
-		"svelte": "^4.0.5",
-		"svelte-check": "^3.6.0",
-		"tslib": "^2.4.1",
-		"typescript": "^5.0.0",
-		"vite": "^4.4.2"
+		"@sveltejs/adapter-auto": "2.0.0",
+		"@sveltejs/kit": "1.27.4",
+		"autoprefixer": "10.4.16",
+		"postcss": "8.4.31",
+		"prettier": "3.1.0",
+		"prettier-plugin-tailwindcss": "0.5.7",
+		"svelte": "4.0.5",
+		"svelte-check": "3.6.0",
+		"tailwindcss": "3.3.5",
+		"tslib": "2.4.1",
+		"tsx": "4.1.3",
+		"typescript": "4.9.5",
+		"vite": "4.4.2"
 	},
-	"type": "module"
+	"type": "module",
+	"dependencies": {
+		"@pinecone-database/pinecone": "1.1.2",
+		"dotenv": "16.3.1",
+		"langchain": "0.0.55",
+		"pdf-parse": "1.1.1",
+		"svelte-markdown": "^0.4.0"
+	}
 }
