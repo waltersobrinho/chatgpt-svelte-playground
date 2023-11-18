@@ -3,18 +3,24 @@ import { PineconeStore } from 'langchain/vectorstores/pinecone';
 import { OPENAI_API_KEY, PINECONE_INDEX_NAME } from '$env/static/private';
 import { makeChain } from '../../utils/make-chain';
 import { pinecone } from '../../utils/pinecone';
+import type { ActionResult, Actions } from '@sveltejs/kit';
 
-export const actions = {
-	default: async (event) => {
+export const actions: Actions = {
+	default: async (event): Promise<ActionResult> => {
 		const reponse = await event.request.formData();
-		const message = reponse.get('userMessage');
-		const response = await makeRequest({ message });
+		const message: string | null = reponse.get('userMessage') as string;
 
-		return response;
+		const response = await makeRequest({ message });
+		console.log(response);
+		return {
+			type: 'success',
+			data: response,
+			status: 200,
+		};
 	},
 };
 
-async function makeRequest({ message }: any) {
+async function makeRequest({ message }: { message: string }) {
 	console.log('Message sent');
 	if (!message) {
 		return new Response(
@@ -46,7 +52,7 @@ async function makeRequest({ message }: any) {
 			question: sanitizedQuestion,
 			chat_history: [],
 		});
-		console.log("Response in it's final stage");
+
 		return response.text;
 	} catch (error: any) {
 		console.log('error', error);

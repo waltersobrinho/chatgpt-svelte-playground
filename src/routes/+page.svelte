@@ -5,43 +5,39 @@
 	import LoadingDots from '$lib/loading-dots.svelte';
 	import { enhance } from '$app/forms';
 	import { history, loading } from '../store';
+	import type { Message } from '../store';
+	import Robot from '$lib/assets/images/robot.png';
+	import User from '$lib/assets/images/user.png';
+	import { onDestroy } from 'svelte';
 
 	let formElement: HTMLFormElement;
-	type Message = {
-		type: 'apiMessage' | 'userMessage';
-		message: string;
-		isStreaming?: boolean;
-		sourceDocs?: Document[];
-	};
-	interface MessageState {
-		messages: Message[];
-		pending?: string;
-		history: [string, string][];
-		pendingSourceDocs?: Document[];
-	}
 
-	export let form: string;
 	let isLoading: boolean;
-	loading.subscribe((loading) => {
-		console.log(loading);
+	const unsubscribeLoading = loading.subscribe((loading) => {
 		isLoading = loading;
 	});
+
 	let query = '';
 	let error = '';
+	let messages: Message[];
 
-	$: messages = form
-		? [{ message: form, type: 'apiMessage' }]
-		: [{ message: 'Make your question', type: 'apiMessage' }];
+	const unsubscribHistory = history.subscribe((history) => {
+		messages = history;
+	});
 
-	// prevent empty submissions
 	const handleEnter = (e: any) => {
 		if (e.key === 'Enter' && query.length) {
 			e.preventDefault();
 			formElement.requestSubmit();
-			history.update((hist) => [...hist, query]);
+			history.update((hist) => [...hist, { text: query, type: 'user' }]);
 			query = '';
 		}
 	};
+
+	onDestroy(() => {
+		unsubscribeLoading();
+		unsubscribHistory();
+	});
 </script>
 
 <Layout>
@@ -56,25 +52,28 @@
 				<div class="w-full h-full overflow-y-scroll rounded-sm">
 					{#each messages as message (message)}
 						<div animate:flip>
-							{#if message.type === 'apiMessage'}
-								<div class="bg-[#f9fafb] p-1.5 text-white flex" />
-								<img
-									src=""
-									alt="bot"
-									class="h-[40px] w-[40px] rouned-sm h-full"
-								/>
-								<div class="leading-7">
-									<SvelteMarkdown source={message.message} />
+							{#if message.type === 'api'}
+								<div
+									class="bg-[#f9fafb] p-1.5 text-black flex gap-8 bg-slate-100"
+								>
+									<img
+										src={Robot}
+										alt="bot"
+										class="h-[40px] w-[40px] rouned-sm h-full"
+									/>
+									<div class="leading-7">
+										<SvelteMarkdown source={message.text} />
+									</div>
 								</div>
 							{:else}
-								<div class="p-6 flex text-white bg-black">
+								<div class="p-1.5 flex gap-8 text-white bg-slate-400">
 									<img
-										src=""
+										src={User}
 										alt="user"
 										class="mr-4 rounded-sm h-[30px] w-[30px]"
 									/>
 									<div class="leading-7">
-										<SvelteMarkdown source={message.message} />
+										<SvelteMarkdown source={message.text} />
 									</div>
 								</div>
 							{/if}
@@ -89,8 +88,13 @@
 						bind:this={formElement}
 						use:enhance={() => {
 							loading.set(true);
-							return ({ update }) => {
+							return ({ update, result }) => {
 								loading.set(false);
+								history.update((hist) => [
+									...hist,
+									{ text: result.data, type: 'api' },
+								]);
+
 								update();
 							};
 						}}
