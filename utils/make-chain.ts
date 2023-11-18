@@ -1,7 +1,8 @@
 import { OpenAI } from 'langchain/llms/openai';
-import { PineconeStore } from 'langchain/vectorstores/pinecone';
 import { LLMChain, loadQAChain, ChatVectorDBQAChain } from 'langchain/chains';
 import { PromptTemplate } from 'langchain/prompts';
+import type { PineconeStore } from 'langchain/vectorstores/pinecone';
+import { OPENAI_API_KEY } from '$env/static/private';
 
 const CONDENSE_PROMPT =
 	PromptTemplate.fromTemplate(`Given the following conversation and a follow up question, rephrase the follow up question to be a standalone question.
@@ -23,13 +24,17 @@ Helpful answer in markdown:`);
 
 export const makeChain = (vectorstore: PineconeStore) => {
 	const questionGenerator = new LLMChain({
-		llm: new OpenAI({ temperature: 0 }),
+		llm: new OpenAI({ temperature: 0, openAIApiKey: OPENAI_API_KEY }),
 		prompt: CONDENSE_PROMPT,
 	});
 
 	const docChain = loadQAChain(
 		//change modelName to gpt-4 if you have access to it
-		new OpenAI({ temperature: 0, modelName: 'gpt-3.5-turbo' }),
+		new OpenAI({
+			temperature: 0,
+			modelName: 'gpt-3.5-turbo',
+			openAIApiKey: OPENAI_API_KEY,
+		}),
 		{
 			prompt: QA_PROMPT,
 		}
@@ -40,6 +45,6 @@ export const makeChain = (vectorstore: PineconeStore) => {
 		combineDocumentsChain: docChain,
 		questionGeneratorChain: questionGenerator,
 		returnSourceDocuments: true,
-		k: 4, //number of source documents to return. Change this figure as required.
+		k: 1, //number of source documents to return. Change this figure as required.
 	});
 };

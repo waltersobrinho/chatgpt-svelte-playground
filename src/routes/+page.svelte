@@ -2,35 +2,46 @@
 	import SvelteMarkdown from 'svelte-markdown';
 	import Layout from '$lib/layout.svelte';
 	import { flip } from 'svelte/animate';
+	import LoadingDots from '$lib/loading-dots.svelte';
+	import { enhance } from '$app/forms';
+	import { history, loading } from '../store';
 
+	let formElement: HTMLFormElement;
 	type Message = {
 		type: 'apiMessage' | 'userMessage';
 		message: string;
 		isStreaming?: boolean;
 		sourceDocs?: Document[];
 	};
-	interface MessageSate {
+	interface MessageState {
 		messages: Message[];
 		pending?: string;
 		history: [string, string][];
 		pendingSourceDocs?: Document[];
 	}
 
+	export let form: string;
+	let isLoading: boolean;
+	loading.subscribe((loading) => {
+		console.log(loading);
+		isLoading = loading;
+	});
 	let query = '';
-	let loading = '';
 	let error = '';
-	let messageState: MessageSate = {
-		messages: [
-			{
-				message:
-					'Hi, what would you like to learn about this intriguing article?',
-				type: 'apiMessage',
-			},
-		],
-		history: [],
-	};
 
-	const { messages, history } = messageState;
+	$: messages = form
+		? [{ message: form, type: 'apiMessage' }]
+		: [{ message: 'Make your question', type: 'apiMessage' }];
+
+	// prevent empty submissions
+	const handleEnter = (e: any) => {
+		if (e.key === 'Enter' && query.length) {
+			e.preventDefault();
+			formElement.requestSubmit();
+			history.update((hist) => [...hist, query]);
+			query = '';
+		}
+	};
 </script>
 
 <Layout>
@@ -39,7 +50,9 @@
 			Chat With Your Favorite Philosopher
 		</h1>
 		<main class="flex flex-col justify-between items-center p-4">
-			<div class="relative">
+			<div
+				class="w-[75vw] h-[65vh] bg-[#ffffff] rounded-sm border flex justify-center items-center"
+			>
 				<div class="w-full h-full overflow-y-scroll rounded-sm">
 					{#each messages as message (message)}
 						<div animate:flip>
@@ -69,6 +82,61 @@
 					{/each}
 				</div>
 			</div>
+			<div class="flex justify-center items-center relative py-4 px-0 flex-col">
+				<div class="relative">
+					<form
+						method="post"
+						bind:this={formElement}
+						use:enhance={() => {
+							loading.set(true);
+							return ({ update }) => {
+								loading.set(false);
+								update();
+							};
+						}}
+					>
+						<textarea
+							disabled={isLoading}
+							on:keydown={handleEnter}
+							rows={1}
+							maxLength={512}
+							id="userInput"
+							name="userMessage"
+							placeholder={isLoading
+								? 'Waiting for response...'
+								: 'What is this text about?'}
+							bind:value={query}
+							class="relative resize-none text-lg py-2 px-4 w-[75vw] rounded-lg border border-color-[#d9d9e3] bg-white text-black outline-none"
+						/>
+						<button
+							type="submit"
+							disabled={isLoading}
+							class="absolute top-3 right-4 text-[#a5a2a2] bg-none p-1.5 flex border-none"
+						>
+							{#if isLoading}
+								<div class="absolute top-1 right-1">
+									<LoadingDots />
+								</div>
+							{:else}
+								<svg
+									viewBox="0 0 20 20"
+									class="w-5 h-5"
+									xmlns="http://www.w3.org/2000/svg"
+								>
+									<path
+										d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z"
+									/>
+								</svg>
+							{/if}
+						</button>
+					</form>
+				</div>
+			</div>
+			{#if error}
+				<div class="border border-red-400 rounded-md p-4">
+					<p class="text-red-500">{error}</p>
+				</div>
+			{/if}
 		</main>
 	</div></Layout
 >
