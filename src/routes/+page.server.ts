@@ -11,12 +11,8 @@ export const actions: Actions = {
 		const message: string | null = reponse.get('userMessage') as string;
 
 		const response = await makeRequest({ message });
-		console.log(response);
-		return {
-			type: 'success',
-			data: response,
-			status: 200,
-		};
+
+		return response;
 	},
 };
 
@@ -54,6 +50,7 @@ async function makeRequest({ message }: { message: string }) {
 		});
 
 		return response.text;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	} catch (error: any) {
 		console.log('error', error);
 		new Response(
