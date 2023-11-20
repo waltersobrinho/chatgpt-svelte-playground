@@ -1,4 +1,4 @@
-
+Sveltekit app inspired by Mayo Oshin's [gpt4-pdf-chatbot-langchain](https://github.com/mayooear/gpt4-pdf-chatbot-langchain)
 # ChatGPT Svelte Playground Documentation
 
 ## Overview
